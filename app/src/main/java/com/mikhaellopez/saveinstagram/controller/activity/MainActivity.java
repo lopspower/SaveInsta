@@ -1,23 +1,26 @@
 package com.mikhaellopez.saveinstagram.controller.activity;
 
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.mikhaellopez.circularimageview.CircularImageView;
+import com.google.gson.Gson;
 import com.mikhaellopez.saveinstagram.R;
 import com.mikhaellopez.saveinstagram.controller.activity.generic.ABaseActivity;
 import com.mikhaellopez.saveinstagram.controller.model.EventInstaPictureLoad;
+import com.mikhaellopez.saveinstagram.controller.model.InstaData;
+import com.mikhaellopez.saveinstagram.controller.model.InstaOwner;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -26,20 +29,27 @@ import java.io.InputStream;
 import java.net.URL;
 
 import butterknife.Bind;
+import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 
 public class MainActivity extends ABaseActivity {
 
     @Bind(R.id.card_view)
-    protected CardView mCardView;
+    protected View mCardView;
+    @Bind(R.id.layout_input)
+    protected View mLayoutInput;
     @Bind(R.id.progressBar)
-    protected ProgressBar mProgressBar;
+    protected View mProgressBar;
     @Bind(R.id.image_to_download)
     protected ImageView mImageToDownload;
     @Bind(R.id.icon_profile)
-    protected CircularImageView mIconProfil;
+    protected ImageView mIconProfil;
     @Bind(R.id.text_user_name)
     protected TextView mTextUserName;
+    @Bind(R.id.edit_insta_url)
+    protected EditText editInstaUrl;
+
+    private String mUserName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +60,26 @@ public class MainActivity extends ABaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mCardView.setVisibility(View.GONE);
-        mProgressBar.setVisibility(View.VISIBLE);
+        // Past Clipboard
         String instaUrl = pastClipboard();
-        Log.e("Mikhael", instaUrl + "media/?size=l");
-        downloadImageData(instaUrl);
+        // Init View
+        initView(instaUrl);
+    }
+
+    private void initView(String instaUrl) {
+        // Init View
+        mCardView.setVisibility(View.GONE);
+        mLayoutInput.setVisibility(View.GONE);
+        mProgressBar.setVisibility(View.VISIBLE);
+        // Check Insta URL
+        if (instaUrl != null && instaUrl.contains("https://www.instagram.com/p/")) {
+            // Download Image
+            downloadImageData(instaUrl);
+        } else {
+            // Show Input
+            mProgressBar.setVisibility(View.GONE);
+            mLayoutInput.setVisibility(View.VISIBLE);
+        }
     }
 
     private String pastClipboard() {
@@ -69,50 +94,92 @@ public class MainActivity extends ABaseActivity {
         return textToPaste;
     }
 
-    private void downloadImageData(final String instaUrl) {
-        if (instaUrl != null && instaUrl.contains("https://www.instagram.com/p/")) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    // Get User and Profil Picture
-                    try {
-                        URL url = new URL(instaUrl);
-                        InputStream is = url.openStream();
-                        int ptr;
-                        StringBuffer buffer = new StringBuffer();
-                        while ((ptr = is.read()) != -1) {
-                            buffer.append((char) ptr);
-                        }
-
-                        String html = buffer.toString();
-
-                        String userNameStartSeparator = "\"user\":{\"username\":\"";
-                        String userNameEndSeparator = "\",\"profile_pic_url\":\"";
-                        int indexOfUserNameSeparator = html.indexOf(userNameEndSeparator);
-                        String userPictureEndSeparator = "\",\"id\":\"";
-
-                        String userName = html.substring(html.indexOf(userNameStartSeparator) + userNameStartSeparator.length(),
-                                indexOfUserNameSeparator);
-                        String urlProfile = html.substring(indexOfUserNameSeparator + userNameEndSeparator.length(),
-                                html.indexOf(userPictureEndSeparator)).replaceAll("\\\\", "");
-
-                        Log.e("Mikhael", "User : " + userName);
-                        Log.e("Mikhael", "urlProfile : " + urlProfile);
-
-                        EventBus.getDefault().post(new EventInstaPictureLoad(instaUrl + "media/?size=l", urlProfile, userName));
-
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-
-                }
-            }).start();
+    @OnClick(R.id.text_user_name)
+    protected void onClickUserName() {
+        Uri uri = Uri.parse("http://instagram.com/_u/" + mUserName);
+        Intent likeIng = new Intent(Intent.ACTION_VIEW, uri);
+        likeIng.setPackage("com.instagram.android");
+        try {
+            startActivity(likeIng);
+        } catch (ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://instagram.com/" + mUserName)));
         }
     }
 
+    @OnClick(R.id.image_action_close)
+    protected void onClickClose() {
+        // Clear Clipboard
+        ClipboardManager clipService = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        ClipData clipData = ClipData.newPlainText("", "");
+        clipService.setPrimaryClip(clipData);
+        // Init View
+        initView(null);
+    }
+
+    @OnClick(R.id.btn_open_insta)
+    protected void onClickOpenInstagram() {
+        String packageName = "com.instagram.android";
+        Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
+        if (intent == null) {
+            // Bring user to the market or let them choose an app?
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("market://details?id=" + packageName));
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+
+    @OnClick(R.id.btn_save_it)
+    protected void onClickSaveIt() {
+        // Init View
+        initView(editInstaUrl.getText().toString());
+    }
+
+    private void downloadImageData(final String instaUrl) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // Get User and Profil Picture
+                try {
+                    URL url = new URL(instaUrl);
+                    InputStream is = url.openStream();
+                    int ptr;
+                    StringBuffer buffer = new StringBuffer();
+                    while ((ptr = is.read()) != -1) {
+                        buffer.append((char) ptr);
+                    }
+
+                    String html = buffer.toString();
+
+                    String startJson = "<script type=\"text/javascript\">window._sharedData = ";
+                    String endJson = ";</script>";
+
+                    String json = html.substring(html.indexOf(startJson)+startJson.length(),
+                            html.indexOf(endJson));
+
+                    InstaData instaData = new Gson().fromJson(json, InstaData.class);
+
+                    InstaOwner instaOwner = instaData.getEntry_data().getPostPage().get(0).getMedia().getOwner();
+                    String userName = instaOwner.getUsername();
+                    String fullName = instaOwner.getFull_name();
+                    String urlProfile = instaOwner.getProfile_pic_url();
+
+                    EventBus.getDefault().post(new EventInstaPictureLoad(userName, fullName, instaUrl + "media/?size=l", urlProfile));
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+        }).start();
+    }
+
     public void onEventMainThread(final EventInstaPictureLoad eventInstaPictureLoad) {
+        // Save userName
+        mUserName = eventInstaPictureLoad.getUserName();
+
         // Load User Name to View
-        mTextUserName.setText(eventInstaPictureLoad.getProfilName());
+        mTextUserName.setText(eventInstaPictureLoad.getUserFullName());
 
         final Handler handler = new Handler();
         new Thread(new Runnable() {

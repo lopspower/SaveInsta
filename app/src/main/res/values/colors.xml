@@ -2,11 +2,12 @@
 <resources>
 
     <!-- APP DEFAULT -->
-    <color name="colorPrimary">#3C7092</color>
-    <color name="colorPrimaryDark">#4D7999</color>
+    <color name="colorPrimary">#196B98</color>
+    <color name="colorPrimaryDark">#145D85</color>
     <color name="colorAccent">#444</color>
 
     <!-- GENERAL -->
     <color name="colorBackground">#F1F1F1</color>
+    <color name="colorBorderCircularImageView">#DBDBDB</color>
 
 </resources>

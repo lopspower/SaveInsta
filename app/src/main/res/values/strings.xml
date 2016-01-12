@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SaveInstagram</string>
+    <string name="edit_text_hint">Past Instagram photo URL here</string>
 </resources>
