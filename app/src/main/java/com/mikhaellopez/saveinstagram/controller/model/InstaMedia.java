@@ -5,14 +5,20 @@ package com.mikhaellopez.saveinstagram.controller.model;
  */
 public class InstaMedia {
 
+    private String id;
     private InstaOwner owner;
 
     public InstaMedia() {
         super();
     }
 
-    public InstaMedia(InstaOwner owner) {
+    public InstaMedia(String id, InstaOwner owner) {
+        this.id = id;
         this.owner = owner;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public InstaOwner getOwner() {

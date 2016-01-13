@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">SaveInstagram</string>
     <string name="edit_text_hint">Past Instagram photo URL here</string>
+
+    <string name="info_message">
+        3 Steps to download photo/video from Instagram (1st and 2nd steps can be swaped together)\n\n
+        1. Open SaveInstagram first\n\n
+        2. Open your Instagram, choose Copy Share URL on photo/video you want to save (let SaveInstagram do the magic!)\n\n
+        3. Back to SaveInstagram, download Photo/Video yu love by click to Save button at the bottom right of SaveInstagram, or click to Close button at the top right to remove. Open Gallery to see the result!
+    </string>
 </resources>

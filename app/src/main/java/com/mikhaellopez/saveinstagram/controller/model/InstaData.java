@@ -15,7 +15,7 @@ public class InstaData {
         this.entry_data = entry_data;
     }
 
-    public InstaEntryData getEntry_data() {
+    public InstaEntryData getEntryData() {
         return entry_data;
     }
 }

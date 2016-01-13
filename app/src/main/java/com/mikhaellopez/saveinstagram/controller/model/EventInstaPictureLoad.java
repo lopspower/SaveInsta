@@ -6,16 +6,22 @@ package com.mikhaellopez.saveinstagram.controller.model;
 public class EventInstaPictureLoad {
 
     private String userName;
+    private String userFullName;
     private String urlImage;
     private String urlIconProfil;
-    private String userFullName;
+    private String idImage;
+    private boolean loadWell = true;
 
-    public EventInstaPictureLoad(String userName, String userFullName, String urlImage, String urlIconProfil) {
+    public EventInstaPictureLoad(String userName, String userFullName, String urlImage, String urlIconProfil, String idImage) {
         this.userName = userName;
         this.userFullName = userFullName;
         this.urlImage = urlImage;
         this.urlIconProfil = urlIconProfil;
+        this.idImage = idImage;
+    }
 
+    public EventInstaPictureLoad(boolean loadWell) {
+     this.loadWell = false;
     }
 
     public String getUserName() {
@@ -48,5 +54,21 @@ public class EventInstaPictureLoad {
 
     public void setUrlIconProfil(String urlIconProfil) {
         this.urlIconProfil = urlIconProfil;
+    }
+
+    public String getIdImage() {
+        return idImage;
+    }
+
+    public void setIdImage(String idImage) {
+        this.idImage = idImage;
+    }
+
+    public boolean isLoadWell() {
+        return loadWell;
+    }
+
+    public void setLoadWell(boolean loadWell) {
+        this.loadWell = loadWell;
     }
 }

@@ -35,11 +35,11 @@ public class InstaOwner {
         return entry_data;
     }
 
-    public String getProfile_pic_url() {
+    public String getProfilePicUrl() {
         return profile_pic_url;
     }
 
-    public String getFull_name() {
+    public String getFullname() {
         return full_name;
     }
 }
