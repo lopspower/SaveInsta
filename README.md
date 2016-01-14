@@ -9,9 +9,9 @@ SaveInstagram
 With **SaveInstagram** download all Instagram photos and videos that you love.
 
 3 Steps to download photo/video from Instagram:
-- 1. Open your Instagram, choose Copy Share URL on photo/video you want to save
-- 2. Open SaveInstagram and let it do the magic
-- 3. Back to SaveInstagram, download Photo/Video you love by click to Save button at the bottom right of SaveInstagram, or click to Close button at the top right to remove. Open Gallery to see the result!
+  1. Open your Instagram, choose Copy Share URL on photo/video you want to save
+  2. Open SaveInstagram and let it do the magic
+  3. Back to SaveInstagram, download Photo/Video you love by click to Save button at the bottom right of SaveInstagram, or click to Close button at the top right to remove. Open Gallery to see the result!
 
 LICENCE
 -----
