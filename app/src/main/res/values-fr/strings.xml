@@ -1,5 +1,5 @@
 <resources>
-
+    <string name="app_name">SaveInstagram</string>
     <string name="edit_text_hint">Colle URL de photo/vidéo Instagram ici</string>
 
     <string name="info_message">
@@ -7,7 +7,7 @@
         1. Ouvrir l\'application Instagram, choisir Copier l\'URL de publication sur la photo/vidéo que vous voulez sauvegarder\n\n
         2. Ouvrir SaveInstagram et laisser la magie faire le reste\n\n
         3. Télécharger la Photo/Vidéo en cliquant sur le bouton sauvegarder en bas à droite de SaveInstagram ou cliquer sur la croix en haut à droite pour la supprimer. Ouvrir la galerie pour voir le résultat!
-     </string>
+    </string>
 
     <string name="dialog_button_rate_app">NOTE CETTE APP</string>
     <string name="snackbar_no_market">Vous n\'avez pas de Market App</string>
