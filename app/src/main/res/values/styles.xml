@@ -9,11 +9,6 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowBackground">@color/colorBackground</item>
-        <item name="android:textViewStyle">@style/AppTheme.Widget.TextView</item>
-    </style>
-
-    <style name="AppTheme.Widget.TextView" parent="android:Widget.Holo.Light.TextView">
-        <item name="fontPath">fonts/century_gothic.ttf</item>
     </style>
 
     <!-- APP COMPAT -->

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by mlopez on 13/01/16.
+ * Created by Mikhael LOPEZ on 13/01/16.
  */
 public class DominantImageColor {
 

@@ -1,7 +1,7 @@
 package com.mikhaellopez.saveinstagram.controller.model;
 
 /**
- * Created by mlopez on 11/01/16.
+ * Created by Mikhael LOPEZ on 11/01/16.
  */
 public class EventInstaPictureLoad {
 
@@ -9,66 +9,54 @@ public class EventInstaPictureLoad {
     private String userFullName;
     private String urlImage;
     private String urlIconProfil;
-    private String idImage;
+    private String idContent;
+    private boolean isVideo;
+    private String urlVideo;
     private boolean loadWell = true;
 
-    public EventInstaPictureLoad(String userName, String userFullName, String urlImage, String urlIconProfil, String idImage) {
+    public EventInstaPictureLoad(String userName, String userFullName, String urlImage, String urlIconProfil, String idContent, boolean isVideo, String urlVideo) {
         this.userName = userName;
         this.userFullName = userFullName;
         this.urlImage = urlImage;
         this.urlIconProfil = urlIconProfil;
-        this.idImage = idImage;
+        this.idContent = idContent;
+        this.isVideo = isVideo;
+        this.urlVideo = urlVideo;
     }
 
     public EventInstaPictureLoad(boolean loadWell) {
-     this.loadWell = false;
+        this.loadWell = false;
     }
 
     public String getUserName() {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public String getUserFullName() {
         return userFullName;
-    }
-
-    public void setUserFullName(String userFullName) {
-        this.userFullName = userFullName;
     }
 
     public String getUrlImage() {
         return urlImage;
     }
 
-    public void setUrlImage(String urlImage) {
-        this.urlImage = urlImage;
-    }
-
     public String getUrlIconProfil() {
         return urlIconProfil;
     }
 
-    public void setUrlIconProfil(String urlIconProfil) {
-        this.urlIconProfil = urlIconProfil;
+    public String getIdContent() {
+        return idContent;
     }
 
-    public String getIdImage() {
-        return idImage;
+    public boolean isVideo() {
+        return isVideo;
     }
 
-    public void setIdImage(String idImage) {
-        this.idImage = idImage;
+    public String getUrlVideo() {
+        return urlVideo;
     }
 
     public boolean isLoadWell() {
         return loadWell;
-    }
-
-    public void setLoadWell(boolean loadWell) {
-        this.loadWell = loadWell;
     }
 }

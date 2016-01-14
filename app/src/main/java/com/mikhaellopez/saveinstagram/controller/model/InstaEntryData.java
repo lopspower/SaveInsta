@@ -3,7 +3,7 @@ package com.mikhaellopez.saveinstagram.controller.model;
 import java.util.List;
 
 /**
- * Created by mlopez on 12/01/16.
+ * Created by Mikhael LOPEZ on 12/01/16.
  */
 public class InstaEntryData {
 

@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,8 +31,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.google.gson.Gson;
+import com.mikhaellopez.saveinstagram.BuildConfig;
 import com.mikhaellopez.saveinstagram.R;
 import com.mikhaellopez.saveinstagram.controller.activity.generic.ABaseActivity;
 import com.mikhaellopez.saveinstagram.controller.model.EventChangeDominantColor;
@@ -51,6 +54,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import butterknife.Bind;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
@@ -61,24 +66,33 @@ public class MainActivity extends ABaseActivity {
     protected TextView mToolbarTitle;
     @Bind(R.id.coordinator_layout)
     protected View mCoordinatorLayout;
-    @Bind(R.id.card_view)
-    protected View mCardView;
-    @Bind(R.id.layout_input)
-    protected View mLayoutInput;
+
     @Bind(R.id.progressBar)
     protected View mProgressBar;
+
+    @Bind(R.id.card_view)
+    protected View mCardView;
     @Bind(R.id.image_to_download)
     protected ImageView mImageToDownload;
     @Bind(R.id.icon_profile)
     protected ImageView mIconProfil;
     @Bind(R.id.text_user_name)
     protected TextView mTextUserName;
+    @Bind(R.id.video_to_download)
+    protected VideoView mVideoToDownload;
+    @Bind(R.id.image_action_play)
+    protected View mImageActionPlay;
+
+    @Bind(R.id.layout_input)
+    protected View mLayoutInput;
     @Bind(R.id.edit_insta_url)
     protected EditText editInstaUrl;
 
     private MenuItem mMenuItem;
     private String mUserName;
-    private String mIdImage;
+    private String mIdInstaContent;
+    private boolean mIsVideo;
+    private String mUrlVideo;
     private String mCurrentUrlRemove = null;
     private int mCurrentDominantColor;
 
@@ -139,8 +153,8 @@ public class MainActivity extends ABaseActivity {
     protected void onClickDownload() {
         if (PermissionsUtils.checkAndRequest(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 PermissionsUtils.PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE,
-                "You need to enable this permission to download the picture", null)) {
-            savePicture();
+                getString(R.string.dialog_message_why_permission), null)) {
+            saveInstaContent();
         }
     }
 
@@ -157,7 +171,11 @@ public class MainActivity extends ABaseActivity {
             intent.setData(Uri.parse("market://details?id=" + packageName));
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Snackbar.make(mCoordinatorLayout, R.string.snackbar_no_instagram, Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     @OnClick(R.id.btn_load_it)
@@ -175,11 +193,30 @@ public class MainActivity extends ABaseActivity {
                 initView(editVal);
             } else {
                 // Is Not Insta URL
-                Snackbar.make(mCoordinatorLayout, "Is not an Instagram photo URL", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(mCoordinatorLayout, R.string.snackbar_no_insta_url, Snackbar.LENGTH_SHORT).show();
             }
         } else {
             // Empty
-            Snackbar.make(mCoordinatorLayout, "Input Empty", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(mCoordinatorLayout, R.string.snackbar_input_empty, Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    @OnClick({R.id.image_action_play, R.id.video_to_download})
+    protected void onClickPlayVideo() {
+        if (!mVideoToDownload.isPlaying()) {
+            Uri uri = Uri.parse(mUrlVideo);
+            mVideoToDownload.setVideoURI(uri);
+            mVideoToDownload.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mp.setLooping(true);
+                }
+            });
+            mVideoToDownload.start();
+            mVideoToDownload.setVisibility(View.VISIBLE);
+        } else {
+            mVideoToDownload.setVisibility(View.GONE);
+            mVideoToDownload.stopPlayback();
         }
     }
     //endregion
@@ -214,7 +251,7 @@ public class MainActivity extends ABaseActivity {
                     String fullName = instaOwner.getFullname();
                     String urlProfile = instaOwner.getProfilePicUrl();
 
-                    EventBus.getDefault().post(new EventInstaPictureLoad(userName, fullName, instaUrl + "media/?size=l", urlProfile, instaMedia.getId()));
+                    EventBus.getDefault().post(new EventInstaPictureLoad(userName, fullName, instaUrl + "media/?size=l", urlProfile, instaMedia.getId(), instaMedia.isVideo(), instaMedia.getVideoUrl()));
 
                 } catch (Exception ex) {
                     // Send Fail
@@ -229,10 +266,21 @@ public class MainActivity extends ABaseActivity {
         if (eventInstaPictureLoad != null && eventInstaPictureLoad.isLoadWell()) {
             // Save userName and id image
             mUserName = eventInstaPictureLoad.getUserName();
-            mIdImage = eventInstaPictureLoad.getIdImage();
+            mIdInstaContent = eventInstaPictureLoad.getIdContent();
 
             // Load User Name to View
             mTextUserName.setText(eventInstaPictureLoad.getUserFullName());
+
+            // If is video, Save URL
+            mVideoToDownload.setVisibility(View.GONE);
+            if (eventInstaPictureLoad.isVideo()) {
+                mIsVideo = true;
+                mUrlVideo = eventInstaPictureLoad.getUrlVideo();
+                mImageActionPlay.setVisibility(View.VISIBLE);
+            } else {
+                mIsVideo = false;
+                mImageActionPlay.setVisibility(View.GONE);
+            }
 
             final Handler handler = new Handler();
             new Thread(new Runnable() {
@@ -268,7 +316,7 @@ public class MainActivity extends ABaseActivity {
         } else {
             initView(null);
             // Show erreur
-            Snackbar.make(mCoordinatorLayout, "Load photo failed", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(mCoordinatorLayout, R.string.snackbar_load_photo_failed, Snackbar.LENGTH_SHORT).show();
         }
     }
     //endregion
@@ -286,12 +334,23 @@ public class MainActivity extends ABaseActivity {
         return textToPaste;
     }
 
-    private void savePicture() {
-        Bitmap bitmap = ((BitmapDrawable) mImageToDownload.getDrawable()).getBitmap();
-        if (downloadPicture(bitmap, mIdImage + ".jpg")) {
-            Snackbar.make(mCoordinatorLayout, "Photo saved !", Snackbar.LENGTH_SHORT).show();
+    private void saveInstaContent() {
+        if (!mIsVideo) {
+            // Save Picture
+            Bitmap bitmap = ((BitmapDrawable) mImageToDownload.getDrawable()).getBitmap();
+            if (downloadPicture(bitmap, mIdInstaContent + ".jpg")) {
+                Snackbar.make(mCoordinatorLayout, R.string.snackbar_photo_saved, Snackbar.LENGTH_SHORT).show();
+            } else {
+                Snackbar.make(mCoordinatorLayout, R.string.snackbar_save_photo_failed, Snackbar.LENGTH_SHORT).show();
+            }
         } else {
-            Snackbar.make(mCoordinatorLayout, "Save photo failed", Snackbar.LENGTH_SHORT).show();
+            // Save Video
+            if (mVideoToDownload != null && mVideoToDownload.isPlaying()) {
+                mVideoToDownload.stopPlayback();
+                mVideoToDownload.setVisibility(View.GONE);
+            }
+
+            startDownloadVideo(mUrlVideo, mIdInstaContent + ".mp4");
         }
     }
 
@@ -312,6 +371,76 @@ public class MainActivity extends ABaseActivity {
             if (null != output) {
                 try {
                     output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return result;
+    }
+
+    private void startDownloadVideo(final String urlVideo, final String fileName) {
+        final Handler handler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final boolean isDownload = downloadVideo(urlVideo, fileName);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isDownload) {
+                            Snackbar.make(mCoordinatorLayout, R.string.snackbar_video_saved, Snackbar.LENGTH_SHORT).show();
+                        } else {
+                            Snackbar.make(mCoordinatorLayout, R.string.snackbar_save_video_failed, Snackbar.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+            }
+        }).start();
+    }
+
+    private boolean downloadVideo(String urlVideo, String fileName) {
+        boolean result = false;
+        OutputStream output = null;
+        InputStream input = null;
+        try {
+            File root = new File(Environment.getExternalStorageDirectory() + File.separator + getResources().getString(R.string.app_name) + File.separator);
+            root.mkdirs();
+            File sdImageMainDirectory = new File(root, fileName);
+
+            // Download Video
+            URL url = new URL(urlVideo);
+            HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+            urlConnection.connect();
+
+            input = urlConnection.getInputStream();
+            output = new FileOutputStream(sdImageMainDirectory);
+
+            byte[] data = new byte[input.available()];
+            input.read(data);
+            output.write(data);
+
+            byte[] buffer = new byte[1024];
+            int len1;
+            while ((len1 = input.read(buffer)) > 0) {
+                output.write(buffer, 0, len1);
+            }
+
+            result = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != output) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (null != input) {
+                try {
+                    input.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -342,11 +471,13 @@ public class MainActivity extends ABaseActivity {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            // Set Theme color with Dominant color of Image
-                            setThemeColor(mCurrentDominantColor, color);
+                            if (mCardView.getVisibility() == View.VISIBLE) {
+                                // Set Theme color with Dominant color of Image
+                                setThemeColor(mCurrentDominantColor, color);
+                            }
                         }
                     });
-                } else {
+                } else if (BuildConfig.DEBUG) {
                     Log.e(getClass().getName(), "Color Unknown");
                 }
             }
@@ -402,8 +533,10 @@ public class MainActivity extends ABaseActivity {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animator) {
                     mToolbarTitle.setTextColor((int) animator.getAnimatedValue());
-                    mMenuItem.setIcon(isColorDark(colorTo) ? ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_info) :
-                            ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_info_dark));
+                    if (mMenuItem != null) {
+                        mMenuItem.setIcon(isColorDark(colorTo) ? ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_info) :
+                                ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_info_dark));
+                    }
                 }
             });
             colorAnimationText.start();
@@ -451,22 +584,32 @@ public class MainActivity extends ABaseActivity {
         switch (item.getItemId()) {
             case R.id.action_info:
                 // Show Dialog Information
-                new AlertDialog.Builder(this)
-                        .setIcon(getResources().getDrawable(R.mipmap.ic_launcher))
+                final AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setIcon(ContextCompat.getDrawable(this, R.mipmap.ic_launcher))
                         .setTitle(getResources().getString(R.string.app_name))
                         .setMessage(getResources().getString(R.string.info_message))
                         .setCancelable(false)
-                        .setNeutralButton("RATE THIS APP", new DialogInterface.OnClickListener() {
+                        .setNeutralButton(getString(R.string.dialog_button_rate_app), new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 try {
                                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())));
                                 } catch (ActivityNotFoundException e) {
-                                    Snackbar.make(mCoordinatorLayout, "You don't have Market App", Snackbar.LENGTH_SHORT).show();
+                                    Snackbar.make(mCoordinatorLayout, R.string.snackbar_no_market, Snackbar.LENGTH_SHORT).show();
                                 }
                             }
                         })
                         .setPositiveButton(getResources().getString(android.R.string.ok), null)
-                        .create().show();
+                        .create();
+
+                dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface arg0) {
+                        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorAccent));
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(MainActivity.this, R.color.colorAccent));
+                    }
+                });
+
+                dialog.show();
 
                 break;
         }
@@ -483,7 +626,7 @@ public class MainActivity extends ABaseActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted
-                    savePicture();
+                    saveInstaContent();
                 }
                 break;
         }
