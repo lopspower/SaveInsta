@@ -1,6 +1,8 @@
 package com.mikhaellopez.saveinstagram.controller.activity;
 
 import android.Manifest;
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipDescription;
@@ -10,13 +12,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,10 +34,12 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.mikhaellopez.saveinstagram.R;
 import com.mikhaellopez.saveinstagram.controller.activity.generic.ABaseActivity;
+import com.mikhaellopez.saveinstagram.controller.model.EventChangeDominantColor;
 import com.mikhaellopez.saveinstagram.controller.model.EventInstaPictureLoad;
 import com.mikhaellopez.saveinstagram.controller.model.InstaData;
 import com.mikhaellopez.saveinstagram.controller.model.InstaMedia;
 import com.mikhaellopez.saveinstagram.controller.model.InstaOwner;
+import com.mikhaellopez.saveinstagram.controller.utils.DominantImageColor;
 import com.mikhaellopez.saveinstagram.controller.utils.PermissionsUtils;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -49,6 +57,8 @@ import de.greenrobot.event.EventBus;
 
 public class MainActivity extends ABaseActivity {
 
+    @Bind(R.id.toolbar_title)
+    protected TextView mToolbarTitle;
     @Bind(R.id.coordinator_layout)
     protected View mCoordinatorLayout;
     @Bind(R.id.card_view)
@@ -66,23 +76,24 @@ public class MainActivity extends ABaseActivity {
     @Bind(R.id.edit_insta_url)
     protected EditText editInstaUrl;
 
+    private MenuItem mMenuItem;
     private String mUserName;
     private String mIdImage;
     private String mCurrentUrlRemove = null;
+    private int mCurrentDominantColor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mCurrentDominantColor = ContextCompat.getColor(MainActivity.this, R.color.colorPrimary);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Past Clipboard
-        String instaUrl = pastClipboard();
         // Init View
-        initView(instaUrl);
+        initView(pastClipboard());
     }
 
     private void initView(String instaUrl) {
@@ -92,27 +103,18 @@ public class MainActivity extends ABaseActivity {
         mProgressBar.setVisibility(View.VISIBLE);
         // Check Insta URL
         if (instaUrl != null && instaUrl.contains("https://www.instagram.com/p/") && !instaUrl.equals(mCurrentUrlRemove)) {
-            // Download Image
-            downloadImageData(instaUrl);
+            // Load Image
+            loadImageData(instaUrl);
         } else {
             // Show Input
             mProgressBar.setVisibility(View.GONE);
             mLayoutInput.setVisibility(View.VISIBLE);
+            // Clear Theme Color
+            setThemeColor(mCurrentDominantColor, ContextCompat.getColor(this, R.color.colorPrimary));
         }
     }
 
-    private String pastClipboard() {
-        String textToPaste = null;
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        if (clipboard.hasPrimaryClip()) {
-            ClipData clip = clipboard.getPrimaryClip();
-            if (clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                textToPaste = clip.getItemAt(0).getText().toString();
-            }
-        }
-        return textToPaste;
-    }
-
+    //region Action Click
     @OnClick({R.id.text_user_name, R.id.icon_profile})
     protected void onClickUserName() {
         Uri uri = Uri.parse("http://instagram.com/_u/" + mUserName);
@@ -140,40 +142,6 @@ public class MainActivity extends ABaseActivity {
                 "You need to enable this permission to download the picture", null)) {
             savePicture();
         }
-    }
-
-    private void savePicture() {
-        Bitmap bitmap = ((BitmapDrawable)mImageToDownload.getDrawable()).getBitmap();
-        if (downloadPicture(bitmap, mIdImage + ".jpg")) {
-            Snackbar.make(mCoordinatorLayout, "Photo saved !", Snackbar.LENGTH_SHORT).show();
-        } else {
-            Snackbar.make(mCoordinatorLayout, "Save photo failed", Snackbar.LENGTH_SHORT).show();
-        }
-    }
-
-    private boolean downloadPicture(Bitmap bitmap, String fileName) {
-        boolean result = false;
-        OutputStream output = null;
-        try {
-            File root = new File(Environment.getExternalStorageDirectory() + File.separator + getResources().getString(R.string.app_name) + File.separator);
-            root.mkdirs();
-            File sdImageMainDirectory = new File(root, fileName);
-            output = new FileOutputStream(sdImageMainDirectory);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
-            output.flush();
-            result = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (null != output) {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return result;
     }
 
     @OnClick(R.id.btn_open_insta)
@@ -214,17 +182,10 @@ public class MainActivity extends ABaseActivity {
             Snackbar.make(mCoordinatorLayout, "Input Empty", Snackbar.LENGTH_SHORT).show();
         }
     }
+    //endregion
 
-    private void closeKeyboard() {
-        // Check if no view has focus:
-        View view = getCurrentFocus();
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
-    }
-
-    private void downloadImageData(final String instaUrl) {
+    //region Load Image & User information
+    private void loadImageData(final String instaUrl) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -285,6 +246,8 @@ public class MainActivity extends ABaseActivity {
                                     .into(mImageToDownload, new Callback() {
                                         @Override
                                         public void onSuccess() {
+                                            EventBus.getDefault().post(new EventChangeDominantColor());
+
                                             // Show Result
                                             mProgressBar.setVisibility(View.GONE);
                                             mCardView.setVisibility(View.VISIBLE);
@@ -308,11 +271,178 @@ public class MainActivity extends ABaseActivity {
             Snackbar.make(mCoordinatorLayout, "Load photo failed", Snackbar.LENGTH_SHORT).show();
         }
     }
+    //endregion
+
+    //region Private Method
+    private String pastClipboard() {
+        String textToPaste = null;
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (clipboard.hasPrimaryClip()) {
+            ClipData clip = clipboard.getPrimaryClip();
+            if (clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
+                textToPaste = clip.getItemAt(0).getText().toString();
+            }
+        }
+        return textToPaste;
+    }
+
+    private void savePicture() {
+        Bitmap bitmap = ((BitmapDrawable) mImageToDownload.getDrawable()).getBitmap();
+        if (downloadPicture(bitmap, mIdImage + ".jpg")) {
+            Snackbar.make(mCoordinatorLayout, "Photo saved !", Snackbar.LENGTH_SHORT).show();
+        } else {
+            Snackbar.make(mCoordinatorLayout, "Save photo failed", Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean downloadPicture(Bitmap bitmap, String fileName) {
+        boolean result = false;
+        OutputStream output = null;
+        try {
+            File root = new File(Environment.getExternalStorageDirectory() + File.separator + getResources().getString(R.string.app_name) + File.separator);
+            root.mkdirs();
+            File sdImageMainDirectory = new File(root, fileName);
+            output = new FileOutputStream(sdImageMainDirectory);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+            output.flush();
+            result = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != output) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return result;
+    }
+
+    private void closeKeyboard() {
+        // Check if no view has focus:
+        View view = getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+    //endregion
+
+    //region Theme & Color
+    public void onEventMainThread(EventChangeDominantColor eventChangeDominantColor) {
+        final Handler handler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // Get Dominant Color
+                final int color = getDominantColor(mImageToDownload);
+                if (color != 0) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Set Theme color with Dominant color of Image
+                            setThemeColor(mCurrentDominantColor, color);
+                        }
+                    });
+                } else {
+                    Log.e(getClass().getName(), "Color Unknown");
+                }
+            }
+        }).start();
+    }
+
+    private int getDominantColor(ImageView imageView) {
+        int color = 0;
+        try {
+            Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+            String dominantColor = DominantImageColor.getDominantColorOfImage(bitmap);
+            color = Color.parseColor(dominantColor);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return color;
+    }
+
+    private void setThemeColor(int colorFrom, final int colorTo) {
+        // Set Toolbar and NavigationBar color
+        ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(),
+                colorFrom, colorTo);
+        colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                mToolbar.setBackgroundColor((int) animator.getAnimatedValue());
+            }
+        });
+        colorAnimation.start();
+
+        // Set Status Bar color
+        ValueAnimator colorAnimationDark = ValueAnimator.ofObject(new ArgbEvaluator(),
+                darkerColor(colorFrom), darkerColor(colorTo));
+        colorAnimationDark.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    getWindow().setStatusBarColor((int) animator.getAnimatedValue());
+                    getWindow().setNavigationBarColor((int) animator.getAnimatedValue());
+                }
+            }
+        });
+        colorAnimationDark.start();
+
+        // Set Text and icon color
+        int textColorFrom = getTextColorByBackground(colorFrom);
+        int textColorTo = getTextColorByBackground(colorTo);
+
+        if (textColorFrom != colorTo) {
+            ValueAnimator colorAnimationText = ValueAnimator.ofObject(new ArgbEvaluator(),
+                    textColorFrom, textColorTo);
+            colorAnimationText.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    mToolbarTitle.setTextColor((int) animator.getAnimatedValue());
+                    mMenuItem.setIcon(isColorDark(colorTo) ? ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_info) :
+                            ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_info_dark));
+                }
+            });
+            colorAnimationText.start();
+        }
+        mCurrentDominantColor = colorTo;
+    }
+
+    private int getTextColorByBackground(int backgroundColor) {
+        int textColor;
+        if (isColorDark(backgroundColor)) {
+            textColor = ContextCompat.getColor(this, android.R.color.white);
+        } else {
+            textColor = ContextCompat.getColor(this, R.color.colorAccent);
+        }
+        return textColor;
+    }
+
+    private int darkerColor(int color) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+        hsv[2] *= 0.8f; // value component
+        return Color.HSVToColor(hsv);
+    }
+
+    public boolean isColorDark(int color) {
+        double darkness = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255;
+        if (darkness < 0.5) {
+            return false; // It's a light color
+        } else {
+            return true; // It's a dark color
+        }
+    }
+    //endregion
 
     //region Menu Implememtatiom
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mMenuItem = menu.getItem(0);
         return true;
     }
 
@@ -344,6 +474,7 @@ public class MainActivity extends ABaseActivity {
     }
     //endregion
 
+    //region Permission
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -357,5 +488,6 @@ public class MainActivity extends ABaseActivity {
                 break;
         }
     }
+    //endregion
 
 }
