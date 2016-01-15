@@ -1,4 +1,4 @@
-package com.mikhaellopez.saveinstagram.controller.activity;
+package com.mikhaellopez.saveinsta.activity;
 
 import android.Manifest;
 import android.animation.ArgbEvaluator;
@@ -34,16 +34,16 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.google.gson.Gson;
-import com.mikhaellopez.saveinstagram.BuildConfig;
-import com.mikhaellopez.saveinstagram.R;
-import com.mikhaellopez.saveinstagram.controller.activity.generic.ABaseActivity;
-import com.mikhaellopez.saveinstagram.controller.model.EventChangeDominantColor;
-import com.mikhaellopez.saveinstagram.controller.model.EventInstaPictureLoad;
-import com.mikhaellopez.saveinstagram.controller.model.InstaData;
-import com.mikhaellopez.saveinstagram.controller.model.InstaMedia;
-import com.mikhaellopez.saveinstagram.controller.model.InstaOwner;
-import com.mikhaellopez.saveinstagram.controller.utils.DominantImageColor;
-import com.mikhaellopez.saveinstagram.controller.utils.PermissionsUtils;
+import com.mikhaellopez.saveinsta.BuildConfig;
+import com.mikhaellopez.saveinsta.R;
+import com.mikhaellopez.saveinsta.activity.generic.ABaseActivity;
+import com.mikhaellopez.saveinsta.model.EventChangeDominantColor;
+import com.mikhaellopez.saveinsta.model.EventInstaPictureLoad;
+import com.mikhaellopez.saveinsta.model.InstaData;
+import com.mikhaellopez.saveinsta.model.InstaMedia;
+import com.mikhaellopez.saveinsta.model.InstaOwner;
+import com.mikhaellopez.saveinsta.utils.DominantImageColor;
+import com.mikhaellopez.saveinsta.utils.PermissionsUtils;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 

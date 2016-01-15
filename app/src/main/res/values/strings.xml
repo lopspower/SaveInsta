@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SaveInstagram</string>
+    <string name="app_name">SaveInsta</string>
     <string name="edit_text_hint">Past Instagram photo/video URL here</string>
 
     <string name="info_message">

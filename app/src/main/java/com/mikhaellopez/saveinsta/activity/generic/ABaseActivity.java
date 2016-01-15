@@ -1,11 +1,11 @@
-package com.mikhaellopez.saveinstagram.controller.activity.generic;
+package com.mikhaellopez.saveinsta.activity.generic;
 
 import android.content.Context;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
-import com.mikhaellopez.saveinstagram.R;
+import com.mikhaellopez.saveinsta.R;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;

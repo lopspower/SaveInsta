@@ -3,9 +3,8 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
     defaultConfig {
-        applicationId "com.mikhaellopez.saveinstagram"
+        applicationId 'com.mikhaellopez.saveinsta'
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
@@ -16,6 +15,8 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    productFlavors {
     }
 }
 
@@ -31,5 +32,5 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'de.greenrobot:eventbus:2.4.0'
     compile 'com.mikhaellopez:circularimageview:2.1.1'
-    compile "com.google.code.gson:gson:2.3.1"
+    compile 'com.google.code.gson:gson:2.3.1'
 }

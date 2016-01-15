@@ -1,4 +1,4 @@
-package com.mikhaellopez.saveinstagram.controller.model;
+package com.mikhaellopez.saveinsta.model;
 
 /**
  * Created by Mikhael LOPEZ on 14/01/16.

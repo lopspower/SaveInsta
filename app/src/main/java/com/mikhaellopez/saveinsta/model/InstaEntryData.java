@@ -1,4 +1,4 @@
-package com.mikhaellopez.saveinstagram.controller.model;
+package com.mikhaellopez.saveinsta.model;
 
 import java.util.List;
 

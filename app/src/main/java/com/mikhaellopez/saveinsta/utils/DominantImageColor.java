@@ -1,4 +1,4 @@
-package com.mikhaellopez.saveinstagram.controller.utils;
+package com.mikhaellopez.saveinsta.utils;
 
 import android.graphics.Bitmap;
 
