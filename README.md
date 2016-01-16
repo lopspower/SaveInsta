@@ -1,4 +1,4 @@
-<p align="center"><a target="_blank" href="https://play.google.com/store/apps/details?id=com.mikhaellopez.saveinsta" title="Download on Google Play Store"><img src="http://i66.tinypic.com/10o4093.png"></a></p>
+<p align="center"><img src="http://i66.tinypic.com/10o4093.png"></p>
 
 SaveInsta
 =========
@@ -7,10 +7,6 @@ SaveInsta
 [![Twitter](https://img.shields.io/badge/Twitter-@LopezMikhael-blue.svg?style=flat)](http://twitter.com/lopezmikhael)
 
 With **SaveInsta** download all Instagram photos and videos that you love.
-
-<a target="_blank" href="https://play.google.com/store/apps/details?id=com.mikhaellopez.saveinsta">
-  <img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_45.png" />
-</a>
 
 GUIDELINES
 -----
