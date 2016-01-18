@@ -1,5 +1,7 @@
 <p align="center"><img src="http://i66.tinypic.com/10o4093.png"></p>
 
+<img src="/preview/preview.gif" alt="sample" title="sample" width="300" height="553" align="right" vspace="30" />
+
 SaveInsta
 =========
 [![Platform](https://img.shields.io/badge/platform-android-green.svg)](http://developer.android.com/index.html)
@@ -7,6 +9,8 @@ SaveInsta
 [![Twitter](https://img.shields.io/badge/Twitter-@LopezMikhael-blue.svg?style=flat)](http://twitter.com/lopezmikhael)
 
 With **SaveInsta** download all Instagram photos and videos that you love.
+
+
 
 GUIDELINES
 -----
