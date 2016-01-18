@@ -60,6 +60,10 @@ import butterknife.Bind;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 
+/**
+ * Copyright (C) 2016 Mikhael LOPEZ
+ * Licensed under the Apache License Version 2.0
+ */
 public class MainActivity extends ABaseActivity {
 
     @Bind(R.id.toolbar_title)
