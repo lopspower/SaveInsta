@@ -1,5 +1,3 @@
-<p align="center"><img src="http://i66.tinypic.com/10o4093.png"></p>
-
 <img src="/preview/preview.gif" alt="sample" title="sample" width="300" height="553" align="right" vspace="30" />
 
 SaveInsta
