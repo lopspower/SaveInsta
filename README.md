@@ -1,4 +1,4 @@
-<img src="/preview/preview.gif" alt="sample" title="sample" width="300" height="553" align="right" vspace="30" />
+<img src="/preview/preview.gif" alt="sample" title="sample" width="300" height="553" align="right" />
 
 SaveInsta
 =========
